@@ -1,0 +1,31 @@
+{
+  "name": "opds-server",
+  "version": "1.0.0",
+  "description": "A basic OPDS server powered by Anna's Archive",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "opds",
+    "ebooks",
+    "catalog",
+    "annas-archive"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "axios-ddos-guard-bypass": "^1.0.3",
+    "cheerio": "^1.1.2",
+    "express": "^4.18.2",
+    "playwright": "^1.57.0",
+    "playwright-extra": "^4.3.6",
+    "puppeteer": "^24.33.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "puppeteer-real-browser": "^1.4.4",
+    "tough-cookie": "^6.0.0",
+    "user-agents": "^1.1.669"
+  }
+}
