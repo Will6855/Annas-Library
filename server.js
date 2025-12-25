@@ -1,8 +1,9 @@
 const os = require('os');
+const path = require('path');
 const express = require('express');
 const { generateRootCatalog, generateBooksFeed, generateOpenSearch, generateLanguageCatalog, generateContentTypeCatalog, generateCategoryCatalog } = require('./lib/catalog');
 const { searchBooks, getBookDetails, getActualDownloadLink, getPopularBooks, resolveZlibIdToMd5, ANNAS_ARCHIVE_BASE } = require('./lib/scraper');
-const { generateHomePage } = require('./lib/html');
+const api = require('./lib/api');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -98,6 +99,18 @@ const handleDownload = async (req, res) => {
   }
 };
 
+// API Routes (JSON)
+app.get('/api/books', api.getBooks);
+app.get('/api/books/:md5', api.getBook);
+app.get('/api/popular/:lang', api.getPopular);
+app.get('/api/categories', api.getCategories);
+app.get('/api/content-types', api.getContentTypes);
+app.get('/api/languages', api.getLanguages);
+
+// Serve React build (static files)
+const clientBuildPath = path.join(__dirname, 'client', 'dist');
+app.use(express.static(clientBuildPath));
+
 // OPDS Routes
 const route = (contentType, generator) => (req, res) =>
   res.set('Content-Type', contentType)
@@ -111,7 +124,16 @@ app.get('/opds/:lang(en|fr)/:contentType', route(OPDS_CONTENT_TYPE, generateCont
 app.get('/opds/:lang(en|fr)/:contentType/:category', route(OPDS_CONTENT_TYPE, generateCategoryCatalog));
 app.get('/download/:md5', handleDownload);
 app.get('/opensearch.xml', route('application/opensearchdescription+xml', generateOpenSearch));
-app.get('/', (req, res) => res.send(generateHomePage(getBaseUrl(req))));
+
+// Fallback for React client-side routing (must be last)
+app.get('*', (req, res) => {
+  // Don't serve index.html for OPDS routes
+  if (req.path.startsWith('/opds') || req.path.startsWith('/api')) {
+    return res.status(404).send('Not found');
+  }
+  res.sendFile(path.join(clientBuildPath, 'index.html'));
+});
+
 
 // Start server
 app.listen(PORT, () => {

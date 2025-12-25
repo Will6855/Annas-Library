@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: 'Playfair Display', serif;
+  --font-sans: 'Inter', sans-serif;
+
+  --color-paper: #fdfcf8;
+  /* Warm white */
+  --color-ink: #1c1c16;
+  /* Soft black */
+  --color-ink-light: #5f5f57;
+  /* Muted text */
+  --color-border: #e6e5e0;
+  /* Subtle border */
+
+  --color-accent: #d97706;
+  /* Amber 600 - Classic library gold/leather feel */
+  --color-accent-soft: #fef3c7;
+  /* Amber 100 */
+
+  --animate-fade-in: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer base {
+  body {
+    @apply font-sans antialiased bg-paper text-ink selection:bg-accent-soft selection:text-ink;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .btn-minimal {
+    @apply px-4 py-2 text-sm font-medium transition-colors rounded-md;
+    @apply hover:bg-black/5 active:bg-black/10;
+  }
+
+  .btn-primary {
+    @apply px-6 py-2.5 bg-ink text-white font-medium rounded-lg shadow-sm transition-all;
+    @apply hover:bg-black hover:shadow-md active:scale-95;
+  }
+
+  .card-classic {
+    @apply transition-all duration-300 bg-white border rounded-lg border-border;
+    @apply hover:border-gray-400 hover:shadow-lg;
+  }
+
+  .input-classic {
+    @apply w-full px-4 py-3 transition-all bg-white border rounded-lg outline-none border-border;
+    @apply focus:border-ink focus:ring-1 focus:ring-ink placeholder:text-gray-400;
+  }
+}
