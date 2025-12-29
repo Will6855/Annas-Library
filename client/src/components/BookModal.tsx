@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { X, Download, FileText, Calendar, Globe, HardDrive } from 'lucide-react';
+import { X, Download, FileText, Calendar, Globe, HardDrive, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface Book {
@@ -7,11 +7,13 @@ interface Book {
   md5: string;
   title: string;
   author?: string;
+  publisher?: string;
   coverUrl?: string;
   year?: string;
   languages?: string;
   format?: string;
-  filesize?: string;
+  size?: string;
+  description?: string;
   tags?: string[];
 }
 
@@ -24,6 +26,7 @@ export default function BookModal({ book, onClose }: BookModalProps) {
   const { t } = useTranslation();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
   // Handle cached images
@@ -39,6 +42,29 @@ export default function BookModal({ book, onClose }: BookModalProps) {
 
   const handleImageError = () => {
     setImageError(true);
+  };
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isDownloading) return;
+
+    setIsDownloading(true);
+    try {
+      const response = await fetch(`/download/${book.md5}?resolve=true`);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const data = await response.json();
+      if (data.url) {
+        window.location.assign(data.url);
+      } else {
+        throw new Error('No URL returned');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      alert(t('book.download_error') || 'Could not start download');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   useEffect(() => {
@@ -60,11 +86,11 @@ export default function BookModal({ book, onClose }: BookModalProps) {
       onClick={onClose}
     >
       <div
-        className="bg-paper w-full max-w-2xl shadow-2xl rounded-sm border border-border flex flex-col max-h-[90vh] overflow-hidden animate-[slideIn_0.3s_ease-out]"
+        className="bg-paper w-full max-w-2xl shadow-2xl rounded-sm border border-border flex flex-col max-h-[90vh] animate-[slideIn_0.3s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header / Actions */}
-        <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-border">
+        <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-border flex-shrink-0">
           <span className="font-mono text-xs tracking-widest uppercase text-ink-light">
             {t('book.modal_accession')}: {book.md5}
           </span>
@@ -76,11 +102,11 @@ export default function BookModal({ book, onClose }: BookModalProps) {
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto md:p-8">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8">
           <div className="flex flex-col gap-8 md:flex-row">
             {/* Cover Column */}
             <div className="flex-shrink-0 w-full md:w-1/3">
-              <div className="aspect-[2/3] bg-[#f8f8f5] border border-border shadow-sm relative overflow-hidden">
+              <div className="aspect-[2/3] bg-[#f8f8f5] border border-border shadow-sm relative overflow-hidden sticky top-0">
                 {/* Placeholder / Default Cover (visible if loading or error) */}
                 {(!imageLoaded || imageError || !book.coverUrl) && (
                   <div className="absolute inset-0 z-0 flex flex-col items-center justify-center w-full h-full p-6 text-center">
@@ -111,9 +137,12 @@ export default function BookModal({ book, onClose }: BookModalProps) {
                 <h2 className="mb-2 font-serif text-3xl font-bold leading-tight md:text-4xl text-ink">
                   {book.title}
                 </h2>
-                <p className="font-serif text-xl italic text-ink-light">
-                  {book.author || t('book.unknown_author')}
-                </p>
+                <div className="font-serif text-xl italic text-ink-light space-y-1">
+                  <p>{book.author || t('book.unknown_author')}</p>
+                  {book.publisher && (
+                    <p className="text-sm not-italic text-ink-lighter">{book.publisher}</p>
+                  )}
+                </div>
               </div>
 
               {/* Data Grid */}
@@ -143,9 +172,19 @@ export default function BookModal({ book, onClose }: BookModalProps) {
                   <div className="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-ink-light">
                     <HardDrive size={14} /> {t('book.size')}
                   </div>
-                  <span className="font-mono uppercase text-ink">{book.filesize || '—'}</span>
+                  <span className="font-mono uppercase text-ink">{book.size || '—'}</span>
                 </div>
               </div>
+
+              {/* Description */}
+              {book.description && (
+                <div className="space-y-2">
+                   {/* <span className="text-xs font-bold tracking-wider uppercase text-ink-light">{t('book.description')}</span> */}
+                  <div className="font-serif text-sm leading-relaxed text-ink/80 bg-[#f8f8f5] p-4 border border-border/50 rounded-sm">
+                    {book.description}
+                  </div>
+                </div>
+              )}
 
               {/* Tags */}
               {book.tags && book.tags.length > 0 && (
@@ -165,12 +204,22 @@ export default function BookModal({ book, onClose }: BookModalProps) {
               <div className="pt-2">
                 <a
                   href={`/download/${book.md5}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center w-full gap-3 py-4 text-sm tracking-widest uppercase transition-all border shadow-none btn-primary hover:bg-accent hover:border-accent hover:text-white border-ink"
+                  onClick={handleDownload}
+                  className={`flex items-center justify-center w-full gap-3 py-4 text-sm tracking-widest uppercase transition-all border shadow-none btn-primary hover:bg-accent hover:border-accent hover:text-white border-ink ${
+                    isDownloading ? 'opacity-80 cursor-wait' : ''
+                  }`}
                 >
-                  <Download size={18} />
-                  {t('book.download')}
+                  {isDownloading ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      {t('book.preparing_download') || 'Preparing...'}
+                    </>
+                  ) : (
+                    <>
+                      <Download size={18} />
+                      {t('book.download')}
+                    </>
+                  )}
                 </a>
               </div>
             </div>

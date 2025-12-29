@@ -54,5 +54,7 @@
     "footer.text": "LA BIBLIOTHÈQUE D'ANNA — SAVOIR POUR TOUS",
     "filter.popular": "Populaire",
     "header.copy_opds": "Copier l'URL OPDS",
-    "header.opds_copied": "URL OPDS copiée dans le presse-papiers !"
+    "header.opds_copied": "URL OPDS copiée dans le presse-papiers !",
+    "book.preparing_download": "Préparation...",
+    "book.download_error": "Erreur de téléchargement"
 }

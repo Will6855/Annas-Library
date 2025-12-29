@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const os = require('os');
 const path = require('path');
 const express = require('express');
@@ -79,6 +81,8 @@ const handlePopular = async (req, res) => {
 
 const handleDownload = async (req, res) => {
   let { md5 } = req.params;
+  const { resolve } = req.query;
+
   try {
     if (md5.startsWith('zlib:')) {
       const resolved = await resolveZlibIdToMd5(md5.replace('zlib:', ''));
@@ -90,12 +94,18 @@ const handleDownload = async (req, res) => {
     
     const book = await getBookDetails(md5);
     if (book?.downloadLinks?.length) {
-      return res.redirect(await getActualDownloadLink(book.downloadLinks[0]));
+      const actualLink = await getActualDownloadLink(book.downloadLinks[0]);
+      
+      if (resolve === 'true') {
+        return res.json({ url: actualLink });
+      }
+      
+      return res.redirect(actualLink);
     }
-    res.redirect(`${ANNAS_ARCHIVE_BASE}/md5/${md5}`);
+    return res.status(404).send('Could not download the book');
   } catch (error) {
     console.error(`Download error: ${error.message}`);
-    res.redirect(`${ANNAS_ARCHIVE_BASE}/md5/${md5}`);
+    return res.status(500).send('Could not download the book');
   }
 };
 

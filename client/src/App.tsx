@@ -19,7 +19,7 @@ interface Book {
   year?: string;
   languages?: string;
   format?: string;
-  filesize?: string;
+  size?: string;
   tags?: string[];
 }
 

@@ -54,5 +54,7 @@
     "footer.text": "ANNA'S LIBRARY — KNOWLEDGE FOR ALL",
     "filter.popular": "Popular",
     "header.copy_opds": "Copy OPDS URL",
-    "header.opds_copied": "OPDS URL copied to clipboard!"
+    "header.opds_copied": "OPDS URL copied to clipboard!",
+    "book.preparing_download": "Preparing...",
+    "book.download_error": "Download Error"
 }
