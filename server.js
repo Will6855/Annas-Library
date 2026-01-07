@@ -4,7 +4,7 @@ const os = require('os');
 const path = require('path');
 const express = require('express');
 const { generateRootCatalog, generateBooksFeed, generateOpenSearch, generateLanguageCatalog, generateContentTypeCatalog, generateCategoryCatalog } = require('./lib/catalog');
-const { searchBooks, getBookDetails, getActualDownloadLink, getPopularBooks, resolveZlibIdToMd5, ANNAS_ARCHIVE_BASE } = require('./lib/scraper');
+const { searchBooks, getBookDetails, getActualDownloadLink, getPopularBooks, resolveZlibIdToMd5 } = require('./lib/scraper');
 const api = require('./lib/api');
 
 const app = express();
