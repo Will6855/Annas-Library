@@ -109,57 +109,75 @@ const handleDownload = async (req, res) => {
   }
 };
 
-// API Routes (JSON)
-app.get('/api/books', api.getBooks);
-app.get('/api/books/:md5', api.getBook);
-app.get('/api/popular/:lang', api.getPopular);
-app.get('/api/categories', api.getCategories);
-app.get('/api/content-types', api.getContentTypes);
-app.get('/api/languages', api.getLanguages);
+const { createServer: createViteServer } = require('vite');
 
-// Serve React build (static files)
-const clientBuildPath = path.join(__dirname, 'client', 'dist');
-app.use(express.static(clientBuildPath));
+async function startServer() {
+  const isDev = process.env.NODE_ENV === 'development';
+  const clientBuildPath = path.join(__dirname, 'client', 'dist');
 
-// OPDS Routes
-const route = (contentType, generator) => (req, res) =>
-  res.set('Content-Type', contentType)
-    .send(generator(getBaseUrl(req), ...Object.values({ ...req.params, ...req.query })));
-
-app.get('/opds', route(OPDS_CONTENT_TYPE, generateRootCatalog));
-app.get('/opds/search', handleSearch);
-app.get('/opds/:lang(en|fr)', route(OPDS_CONTENT_TYPE, generateLanguageCatalog));
-app.get('/opds/:lang(en|fr)/popular', handlePopular);
-app.get('/opds/:lang(en|fr)/:contentType', route(OPDS_CONTENT_TYPE, generateContentTypeCatalog));
-app.get('/opds/:lang(en|fr)/:contentType/:category', route(OPDS_CONTENT_TYPE, generateCategoryCatalog));
-app.get('/download/:md5', handleDownload);
-app.get('/opensearch.xml', route('application/opensearchdescription+xml', generateOpenSearch));
-
-// Fallback for React client-side routing (must be last)
-app.get('*', (req, res) => {
-  // Don't serve index.html for OPDS routes
-  if (req.path.startsWith('/opds') || req.path.startsWith('/api')) {
-    return res.status(404).send('Not found');
+  let vite;
+  if (isDev) {
+    vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'custom',
+      root: path.join(__dirname, 'client')
+    });
+    app.use(vite.middlewares);
   }
-  res.sendFile(path.join(clientBuildPath, 'index.html'));
-});
 
+  // API & OPDS Routes (same as before)
+  const route = (contentType, generator) => (req, res) =>
+    res.set('Content-Type', contentType)
+      .send(generator(getBaseUrl(req), ...Object.values({ ...req.params, ...req.query })));
 
-// Start server
-app.listen(PORT, () => {
-  console.log('\n\x1b[5;1;36m' + '✨ OPDS SERVER STARTED ✨' + '\x1b[0m');
-  console.log('\x1b[1;33m' + '─'.repeat(50) + '\x1b[0m');
+  app.get('/api/books', api.getBooks);
+  app.get('/api/books/:md5', api.getBook);
+  app.get('/api/popular/:lang', api.getPopular);
+  app.get('/api/categories', api.getCategories);
+  app.get('/api/content-types', api.getContentTypes);
+  app.get('/api/languages', api.getLanguages);
 
-  // Local
-  console.log(`\x1b[1;33m● Local:\x1b[0m http://localhost:${PORT}`);
+  app.get('/opds', route(OPDS_CONTENT_TYPE, generateRootCatalog));
+  app.get('/opds/search', handleSearch);
+  app.get('/opds/:lang(en|fr)', route(OPDS_CONTENT_TYPE, generateLanguageCatalog));
+  app.get('/opds/:lang(en|fr)/popular', handlePopular);
+  app.get('/opds/:lang(en|fr)/:contentType', route(OPDS_CONTENT_TYPE, generateContentTypeCatalog));
+  app.get('/opds/:lang(en|fr)/:contentType/:category', route(OPDS_CONTENT_TYPE, generateCategoryCatalog));
+  app.get('/download/:md5', handleDownload);
+  app.get('/opensearch.xml', route('application/opensearchdescription+xml', generateOpenSearch));
 
-  // Network interfaces
-  Object.values(os.networkInterfaces()).flat().forEach(alias => {
-    if (alias.family === 'IPv4' && !alias.internal) {
-      console.log(`\x1b[1;32m● Network:\x1b[0m http://${alias.address}:${PORT}`);
+  if (!isDev) {
+    app.use(express.static(clientBuildPath));
+  }
+
+  // Catch-all
+  app.get('*', async (req, res) => {
+    const url = req.originalUrl;
+    
+    if (isDev) {
+      try {
+        let template = require('fs').readFileSync(path.resolve(__dirname, 'client/index.html'), 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+      } catch (e) {
+        vite.ssrFixStacktrace(e);
+        res.status(500).end(e.stack);
+      }
+    } else {
+      if (req.path.startsWith('/opds') || req.path.startsWith('/api')) {
+        return res.status(404).send('Not found');
+      }
+      res.sendFile(path.join(clientBuildPath, 'index.html'));
     }
   });
 
-  console.log('\x1b[1;36m' + '─'.repeat(50) + '\x1b[0m');
-  console.log(`\x1b[1;34m● Use:\x1b[0m http://localhost:${PORT}/opds\n`);
+
+  app.listen(PORT, () => {
+    console.log(`\n✨ OPDS Server (${isDev ? 'Development' : 'Production'}) started on http://localhost:${PORT}`);
+  });
+}
+
+startServer().catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });

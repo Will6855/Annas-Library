@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "cross-env NODE_ENV=development node --watch --watch-path=server.js --watch-path=lib/ server.js",
+    "build": "npm run build --prefix client"
   },
   "keywords": [
     "opds",
@@ -15,8 +16,15 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "@vitejs/plugin-react": "^5.1.2",
     "cheerio": "^1.1.2",
     "dotenv": "^17.2.3",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "vite": "^7.3.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0"
   }
 }
