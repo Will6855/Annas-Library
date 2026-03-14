@@ -1,4 +1,4 @@
-# OPDS Server
+# Anna's Library
 
 A modern OPDS (Open Publication Distribution System) server powered by Anna's Archive, providing access to millions of books through a standardized catalog format. This server exposes Anna's Archive's vast collection via OPDS feeds that can be consumed by e-reader applications and also includes a beautiful web interface for browsing.
 
