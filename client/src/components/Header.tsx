@@ -66,7 +66,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b bg-paper/80 backdrop-blur-md border-border">
-      <div className="flex items-center h-16 max-w-screen-xl px-6 mx-auto">
+      <div className="flex items-center h-16 px-6 mx-auto max-w-7xl">
         
         {/* Far Left: Title/Logo - Takes 2/3 on mobile, flex-1 on desktop */}
         <div className="flex justify-start flex-none w-2/3 md:flex-1 md:w-auto">
@@ -113,7 +113,7 @@ export default function Header() {
             <select 
               value={i18n.language}
               onChange={(e) => changeLanguage(e.target.value)}
-              className="bg-transparent border-none text-[10px] font-mono uppercase tracking-widest cursor-pointer focus:ring-0 p-0 pr-4 min-w-[90px] text-ink-light hover:text-ink transition-colors"
+              className="bg-transparent border-none text-[10px] font-mono uppercase tracking-widest cursor-pointer focus:ring-0 p-0 pr-4 min-w-22.5 text-ink-light hover:text-ink transition-colors"
             >
               <option value="en">English</option>
               <option value="fr">Français</option>
@@ -152,7 +152,7 @@ export default function Header() {
             ) : (
               <>
                 <Copy size={16} />
-                <span>{t('header.copy_opds')}</span>
+                <span>OPDS</span>
               </>
             )}
           </button>

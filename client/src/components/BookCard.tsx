@@ -48,7 +48,7 @@ export default function BookCard({ book, onClick }: BookCardProps) {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Cover / Spine */}
-      <div className="relative aspect-[2/3] w-full bg-[#f8f8f5] overflow-hidden"> {/* Removed border-b */}
+      <div className="relative aspect-2/3 w-full bg-[#f8f8f5] overflow-hidden"> {/* Removed border-b */}
         {/* Placeholder / Default Cover (visible if loading or error) */}
         {(!imageLoaded || imageError || !book.coverUrl) && (
           <div className="absolute inset-0 z-0 flex flex-col items-center justify-center w-full h-full p-6 text-center">

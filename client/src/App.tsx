@@ -138,21 +138,24 @@ function App() {
     setLoading(true);
     try {
       const isPopular = searchParams.get('popular') === 'true';
-      let url = '/api/books';
+      const lang = searchParams.get('lang') || i18n.language || 'en';
+      
+      let endpoint, queryString;
       
       if (isPopular) {
-        const lang = searchParams.get('lang') || i18n.language || 'en';
-        url = `/api/popular/${lang}`;
-      }
-      
-      const params = new URLSearchParams();
-      if (!isPopular) {
+        endpoint = `/api/popular/${lang}`;
+        const page = searchParams.get('page');
+        queryString = page && page !== '1' ? `?page=${page}` : '';
+      } else {
+        endpoint = '/api/books';
+        const params = new URLSearchParams();
         searchParams.forEach((value, key) => {
           if (value && key !== 'popular') params.append(key, value);
         });
+        queryString = params.toString() ? `?${params.toString()}` : '';
       }
       
-      const response = await fetch(`${url}${params.toString() ? '?' + params.toString() : ''}`);
+      const response = await fetch(`${endpoint}${queryString}`);
       const data = await response.json();
       if (data.success) {
         setBooks(data.data.books);
@@ -235,7 +238,7 @@ function App() {
     <div className="flex flex-col min-h-screen bg-paper">
       <Header />
 
-      <main className="flex-1 w-full max-w-screen-xl px-6 py-12 mx-auto">
+      <main className="flex-1 w-full px-6 py-12 mx-auto max-w-7xl">
         <Routes>
           <Route path="/" element={
             <>
@@ -254,7 +257,7 @@ function App() {
               </div>
 
               {/* Filter Toolbar */}
-              <div className="sticky z-40 flex flex-wrap items-center justify-between gap-4 py-4 mb-8 border-y border-border bg-white/50 backdrop-blur-sm top-16">
+              <div className="sticky z-40 flex flex-wrap items-center justify-between gap-4 py-4 mb-8 border-y border-border bg-white/50 backdrop-blur-sm top-16 max-lg:static">
                  <div className="flex flex-wrap items-center gap-4">
                    <div className="flex items-center gap-2 text-sm font-medium text-ink-light">
                      <Filter size={16} />
@@ -292,7 +295,7 @@ function App() {
                    </select>
                    
                    <select 
-                     className={`border-none text-sm font-medium focus:ring-0 cursor-pointer transition-colors max-w-[150px] truncate bg-transparent ${searchParams.get('popular') ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-ink hover:text-accent'}`}
+                     className={`border-none text-sm font-medium focus:ring-0 cursor-pointer transition-colors max-w-37.5 truncate bg-transparent ${searchParams.get('popular') ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-ink hover:text-accent'}`}
                      value={activeParent?.id || ""}
                      onChange={(e) => handleFilterChange('category', e.target.value)}
                      disabled={searchParams.get('popular') === 'true'}
@@ -307,7 +310,7 @@ function App() {
                      <div className="flex items-center gap-2 animate-fade-in">
                        <span className="text-gray-300">/</span>
                        <select 
-                         className="bg-transparent border-none text-sm font-medium text-ink focus:ring-0 cursor-pointer hover:text-accent transition-colors max-w-[150px] truncate"
+                         className="bg-transparent border-none text-sm font-medium text-ink focus:ring-0 cursor-pointer hover:text-accent transition-colors max-w-37.5 truncate"
                          value={categoryParam === activeParent.id ? "" : categoryParam}
                          onChange={(e) => {
                            const val = e.target.value;
@@ -384,7 +387,7 @@ function App() {
                   <button 
                    key={cat.id}
                    onClick={() => handleCategoryClick(cat.id)}
-                   className="flex flex-col items-center justify-center p-8 text-center transition-all bg-white border rounded-lg group border-border hover:border-accent hover:shadow-lg aspect-square"
+                   className="flex flex-col items-center justify-center p-8 text-center transition-all bg-white border rounded-lg group border-border hover:border-accent hover:shadow-lg min-h-64"
                   >
                     <div className="flex items-center justify-center w-12 h-12 mb-4 transition-colors rounded-full text-ink-light group-hover:text-accent bg-gray-50 group-hover:bg-accent/10">
                       <BookIcon size={24} />
@@ -440,7 +443,7 @@ function App() {
 
       {/* Footer */}
       <footer className="py-8 mt-auto border-t border-border bg-white/50">
-        <div className="max-w-screen-xl px-6 mx-auto font-mono text-xs text-center text-ink-light">
+        <div className="px-6 mx-auto font-mono text-xs text-center max-w-7xl text-ink-light">
            {t('footer.text')}
         </div>
       </footer>
