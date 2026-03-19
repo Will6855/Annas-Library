@@ -1,60 +1,107 @@
 {
-    "app.title": "Anna's Library",
-    "search.placeholder": "Search for title, author, isbn...",
-    "search.button": "Search",
-    "filter.by": "Filter by:",
-    "filter.all_formats": "All Formats",
-    "filter.all_categories": "All Categories",
-    "filter.all_subcategories": "All Subcategories",
-    "hero.title": "Anna's Library",
-    "hero.subtitle": "\"A room without books is like a body without a soul.\"",
-    "results.count": "{{count}} RESULTS",
-    "results.empty": "No volumes found.",
-    "results.empty_desc": "Try adjusting your query or filters.",
-    "book.year": "Year",
-    "book.language": "Language",
-    "book.format": "Format",
-    "book.size": "Size",
-    "book.download": "Download",
-    "book.unknown_author": "Unknown Author",
-    "common.previous": "Previous",
-    "common.next": "Next",
-    "common.page": "PAGE {{page}}",
-    "header.catalog": "Catalog",
-    "header.collections": "Collections",
-    "header.about": "About",
-    "filter.all_languages": "All Languages",
-    "filter.reset": "Reset",
-    "about.title": "About Anna's Library",
-    "about.description": "Anna's Library is a modern interface for accessing a vast collection of human knowledge. Our mission is to make information accessible, readable, and beautiful.",
-    "about.mission_title": "Our Mission",
-    "about.mission_text": "We believe that knowledge should be free and accessible to everyone. This interface is designed to strip away the noise and focus on what matters: the content.",
-    "about.stats_title": "Collection Stats",
-    "about.stats_books": "Books",
-    "about.stats_data": "Data",
-    "about.stats_free": "Free",
-    "categories.title": "Collections",
-    "categories.subtitle": "Explore our curated shelves by subject.",
-    "content.book_nonfiction": "Non-Fiction",
-    "content.book_fiction": "Fiction",
-    "content.book_unknown": "Books",
-    "content.magazine": "Magazine",
-    "content.book_comic": "Comics",
-    "content.standards_document": "Standards",
-    "content.musical_score": "Music Scores",
-    "content.other": "Other",
-    "pagination.previous": "Previous",
-    "pagination.next": "Next",
-    "pagination.page": "PAGE {{page}}",
-    "book.modal_accession": "ACCESSION RECORD",
-    "book.subject_tags": "Subject Tags",
-    "book.view_details": "View Details",
-    "loading.retrieving": "Retrieving from stacks...",
-    "categories.collection": "Collection",
-    "footer.text": "ANNA'S LIBRARY — KNOWLEDGE FOR ALL",
-    "filter.popular": "Popular",
-    "header.copy_opds": "Copy OPDS URL",
-    "header.opds_copied": "OPDS URL copied to clipboard!",
-    "book.preparing_download": "Preparing...",
-    "book.download_error": "Download Error"
+  "app": {
+    "title": "Anna's Library"
+  },
+  "lang": {
+    "en_title": "English Books",
+    "en_desc": "English books on Anna's Library",
+    "fr_title": "French Books",
+    "fr_desc": "French books on Anna's Library"
+  },
+  "search": {
+    "placeholder": "Search for title, author, isbn...",
+    "button": "Search",
+    "results": "Search Results",
+    "title": "Search: "
+  },
+  "filter": {
+    "by": "Filter by:",
+    "all_formats": "All Formats",
+    "all_categories": "All Categories",
+    "all_subcategories": "All Subcategories",
+    "all_languages": "All Languages",
+    "reset": "Reset",
+    "popular": "Popular",
+    "all": "All"
+  },
+  "hero": {
+    "title": "Anna's Library",
+    "subtitle": "\"A room without books is like a body without a soul.\""
+  },
+  "results": {
+    "count": "{{count}} RESULTS",
+    "empty": "No volumes found.",
+    "empty_desc": "Try adjusting your query or filters.",
+    "count_suffix": "results"
+  },
+  "book": {
+    "year": "Year",
+    "language": "Language",
+    "format": "Format",
+    "size": "Size",
+    "download": "Download",
+    "unknown_author": "Unknown Author",
+    "unknown_title": "Unknown Title",
+    "modal_accession": "ACCESSION RECORD",
+    "subject_tags": "Subject Tags",
+    "view_details": "View Details",
+    "preparing_download": "Preparing...",
+    "download_error": "Download Error",
+    "description": "Description"
+  },
+  "common": {
+    "previous": "Previous",
+    "next": "Next",
+    "page": "PAGE {{page}}"
+  },
+  "header": {
+    "catalog": "Catalog",
+    "collections": "Collections",
+    "about": "About",
+    "copy_opds": "Copy OPDS URL",
+    "opds_copied": "OPDS URL copied to clipboard!",
+    "copied": "Copied!",
+    "language": "Language"
+  },
+  "about": {
+    "title": "About Anna's Library",
+    "description": "Anna's Library is a modern interface for accessing a vast collection of human knowledge. Our mission is to make information accessible, readable, and beautiful.",
+    "mission_title": "Our Mission",
+    "mission_text": "We believe that knowledge should be free and accessible to everyone. This interface is designed to strip away the noise and focus on what matters: the content.",
+    "stats_title": "Collection Stats",
+    "stats_books": "Books",
+    "stats_data": "Data",
+    "stats_free": "Free"
+  },
+  "categories": {
+    "title": "Collections",
+    "subtitle": "Explore our curated shelves by subject.",
+    "collection": "Collection"
+  },
+  "content": {
+    "book_nonfiction": "Non-Fiction",
+    "book_fiction": "Fiction",
+    "book_unknown": "Books",
+    "magazine": "Magazine",
+    "book_comic": "Comics",
+    "standards_document": "Standards",
+    "musical_score": "Music Scores",
+    "other": "Other"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "page": "PAGE {{page}}"
+  },
+  "loading": {
+    "retrieving": "Retrieving from stacks..."
+  },
+  "footer": {
+    "text": "ANNA'S LIBRARY — KNOWLEDGE FOR ALL"
+  },
+  "opds": {
+    "short_name": "Anna's Library",
+    "description": "Search for books on Anna's Library",
+    "popular": "ZLIB | Most Popular"
+  }
 }

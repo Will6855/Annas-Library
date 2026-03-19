@@ -28,10 +28,16 @@ export default defineConfig({
   ],
   server: {
     port: 3006,
-    strictPort: true
+    strictPort: true,
+    headers: {
+      'Service-Worker-Allowed': '/'
+    }
   },
   preview: {
     port: 3006,
-    strictPort: true
+    strictPort: true,
+    headers: {
+      'Service-Worker-Allowed': '/'
+    }
   }
 })

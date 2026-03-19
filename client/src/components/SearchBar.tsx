@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface SearchBarProps {
@@ -21,24 +21,47 @@ export default function SearchBar({ onSearch, initialQuery = '' }: SearchBarProp
     onSearch(query);
   };
 
+  const clearQuery = () => {
+    setQuery('');
+    onSearch('');
+  };
+
   return (
     <form className="w-full relative group" onSubmit={handleSubmit}>
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder={t('search.placeholder')}
-        className="w-full pl-12 pr-4 py-4 bg-white border border-gray-300 rounded-lg shadow-sm font-sans text-lg text-ink placeholder-gray-400 focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink transition-all"
-      />
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-         <Search size={20} />
+      <div className="flex gap-3">
+        <div className="flex-1 relative">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t('search.placeholder')}
+            className="input-mobile w-full h-12 md:h-[52px] text-base md:text-lg font-sans"
+            aria-label="Search books"
+          />
+          
+          {/* Clear button - appears when there's text */}
+          {query && (
+            <button
+              type="button"
+              onClick={clearQuery}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-ink-light hover:text-ink transition-colors"
+              aria-label="Clear search"
+            >
+              <X size={18} />
+            </button>
+          )}
+        </div>
+
+        {/* Search button */}
+        <button 
+          type="submit" 
+          className="btn-primary h-12 md:h-[52px] px-6 md:px-8 whitespace-nowrap text-sm md:text-base flex items-center justify-center"
+          aria-label="Search"
+        >
+          <span className="hidden sm:inline">{t('search.button')}</span>
+          <Search size={20} className="sm:hidden" />
+        </button>
       </div>
-      <button 
-        type="submit" 
-        className="absolute right-2 top-2 bottom-2 px-4 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
-      >
-        {t('search.button')}
-      </button>
     </form>
   );
 }

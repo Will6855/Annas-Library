@@ -27,38 +27,80 @@ export default function BookModal({ book, onClose }: BookModalProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [description, setDescription] = useState(book.description || '');
   const imgRef = useRef<HTMLImageElement>(null);
 
-  // Handle cached images
-  useEffect(() => {
-    if (imgRef.current?.complete) {
-      setImageLoaded(true);
+  const [translateY, setTranslateY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartY = useRef(0);
+  const currentY = useRef(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    const scrollArea = document.getElementById('modal-scroll-area');
+    if (scrollArea && scrollArea.contains(e.target as Node)) {
+      // If we're inside the text content and it's scrolled down, allow native scroll
+      if (scrollArea.scrollTop > 0) return;
     }
+    dragStartY.current = e.touches[0].clientY;
+    currentY.current = 0;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const deltaY = e.touches[0].clientY - dragStartY.current;
+    if (deltaY > 0) {
+      setTranslateY(deltaY);
+      currentY.current = deltaY;
+    } else {
+      setTranslateY(0);
+      currentY.current = 0;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    if (currentY.current > 120) {
+      onClose();
+    } else {
+      setTranslateY(0);
+      currentY.current = 0;
+    }
+  };
+
+  useEffect(() => {
+    if (imgRef.current?.complete) setImageLoaded(true);
   }, []);
 
-  const handleImageLoad = () => {
-    setImageLoaded(true);
-  };
-
-  const handleImageError = () => {
-    setImageError(true);
-  };
+  useEffect(() => {
+    if (!description && book.id.startsWith('zlib:') && (book as any).zlibHash) {
+      const zlibId = (book as any).zlibId;
+      const zlibHash = (book as any).zlibHash;
+      const lang = (book.languages || 'en').toLowerCase();
+      
+      fetch(`/api/zlib-detail/${lang}/${zlibId}/${zlibHash}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.success && data.description) {
+            setDescription(data.description);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [book, description]);
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (isDownloading) return;
-
     setIsDownloading(true);
     try {
       const response = await fetch(`/download/${book.md5}?resolve=true`);
       if (!response.ok) throw new Error('Download failed');
-      
       const data = await response.json();
-      if (data.url) {
-        window.location.assign(data.url);
-      } else {
-        throw new Error('No URL returned');
-      }
+      if (data.url) window.location.assign(data.url);
+      else throw new Error('No URL returned');
     } catch (error) {
       console.error('Download error:', error);
       alert(t('book.download_error') || 'Could not start download');
@@ -68,131 +110,156 @@ export default function BookModal({ book, onClose }: BookModalProps) {
   };
 
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    const handleEscape = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handleEscape);
     document.body.style.overflow = 'hidden';
-
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
     };
   }, [onClose]);
 
+  const hasCover = book.coverUrl && !imageError;
+
+  const metaItems = [
+    { icon: <Calendar size={11} />, value: book.year },
+    { icon: <Globe size={11} />,    value: book.languages?.toUpperCase() },
+    { icon: <FileText size={11} />, value: book.format?.toUpperCase() },
+    { icon: <HardDrive size={11} />,value: book.size },
+  ].filter(m => m.value);
+
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center p-4 bg-ink/20 backdrop-blur-sm z-100 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm animate-fade-in sm:items-center sm:p-5"
       onClick={onClose}
     >
       <div
-        className="bg-paper w-full max-w-2xl shadow-2xl rounded-sm border border-border flex flex-col max-h-[90vh] animate-[slideIn_0.3s_ease-out]"
+        className={`flex flex-col w-full max-w-3xl overflow-hidden bg-white shadow-2xl rounded-t-3xl animate-slide-up sm:rounded-3xl ${isDragging ? '' : 'transition-transform duration-300'}`}
+        style={{ maxHeight: '92vh', transform: `translateY(${translateY}px)` }}
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
-        {/* Header / Actions */}
-        <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-border shrink-0">
-          <span className="font-mono text-xs tracking-widest uppercase text-ink-light">
-            {t('book.modal_accession')}: {book.md5}
-          </span>
-          <button
-            onClick={onClose}
-            className="transition-colors text-ink-light hover:text-ink"
-          >
-            <X size={20} />
-          </button>
+        {/* Drag handle — mobile only */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden">
+          <div className="h-1 bg-gray-200 rounded-full w-9" />
         </div>
 
-        <div className="flex-1 p-6 overflow-y-auto md:p-8">
-          <div className="flex flex-col gap-8 md:flex-row">
-            {/* Cover Column */}
-            <div className="w-full shrink-0 md:w-1/3">
-              <div className="aspect-2/3 bg-[#f8f8f5] border border-border shadow-sm overflow-hidden sticky top-0">
-                {/* Placeholder / Default Cover (visible if loading or error) */}
-                {(!imageLoaded || imageError || !book.coverUrl) && (
-                  <div className="absolute inset-0 z-0 flex flex-col items-center justify-center w-full h-full p-6 text-center">
-                    <div className="flex items-center justify-center w-12 h-16 mb-3 border-2 border-gray-200 rounded-sm">
-                      <span className="font-serif italic text-gray-300">A</span>
-                    </div>
-                    <span className="text-[10px] font-serif text-gray-400 line-clamp-2 uppercase tracking-tight">{book.title}</span>
-                  </div>
-                )}
+        {/* Body */}
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden sm:flex-row">
 
-                {book.coverUrl && !imageError && (
-                  <img
-                    ref={imgRef}
-                    src={book.coverUrl}
-                    alt={book.title}
-                    onLoad={handleImageLoad}
-                    onError={handleImageError}
-                    className={`w-full h-full object-cover transition-all duration-700 relative z-10 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-                    loading="lazy"
-                  />
-                )}
-              </div>
+          {/* ── Cover column ── */}
+          <div className="flex flex-col items-center justify-center gap-3 px-6 py-6 border-b border-gray-100 shrink-0 bg-gray-50 sm:w-52 sm:justify-start sm:border-b-0 sm:border-r sm:pt-10">
+
+            {/* Book cover */}
+            <div
+              className={`relative h-44 w-[116px] shrink-0 overflow-hidden bg-stone-300 sm:h-56 sm:w-[148px] ${
+                hasCover
+                  ? 'rounded-l-sm rounded-r-xl shadow-[6px_6px_24px_rgba(0,0,0,0.28),-2px_0_2px_rgba(0,0,0,0.12),inset_-3px_0_6px_rgba(0,0,0,0.08)]'
+                  : 'rounded-l-sm rounded-r-xl shadow-[4px_4px_16px_rgba(0,0,0,0.15)]'
+              }`}
+            >
+              {/* Spine */}
+              <div className="absolute bottom-0 left-0 top-0 z-10 w-1.5 bg-gradient-to-r from-black/20 to-black/[0.03]" />
+
+              {/* Fallback */}
+              {(!hasCover || !imageLoaded) && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-gradient-to-br from-stone-400 to-stone-500">
+                  <span className="line-clamp-5 text-[10px] font-medium leading-snug text-white/90">
+                    {book.title}
+                  </span>
+                </div>
+              )}
+
+              {hasCover && (
+                <img
+                  ref={imgRef}
+                  src={book.coverUrl}
+                  alt={book.title}
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageError(true)}
+                  className={`relative z-[1] h-full w-full object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                  loading="lazy"
+                  decoding="async"
+                />
+              )}
             </div>
+          </div>
 
-            {/* Details Column */}
-            <div className="flex-1 space-y-6">
-              <div>
-                <h2 className="mb-2 font-serif text-3xl font-bold leading-tight md:text-4xl text-ink">
+          {/* ── Detail column ── */}
+          <div className="flex flex-col flex-1 min-h-0">
+
+            {/* Content */}
+            <div className="flex flex-col flex-1 min-h-0 px-6 pt-5 pb-6 sm:pt-6">
+
+              {/* Title & Close Row */}
+              <div className="flex items-start justify-between gap-4 mb-2 shrink-0">
+                <h2 className="text-xl font-semibold leading-snug tracking-tight pt-0.5 text-gray-900 sm:text-2xl">
                   {book.title}
                 </h2>
-                <div className="space-y-1 font-serif text-xl italic text-ink-light">
-                  <p>{book.author || t('book.unknown_author')}</p>
-                  {book.publisher && (
-                    <p className="text-sm not-italic text-ink-lighter">{book.publisher}</p>
-                  )}
-                </div>
+                <button
+                  onClick={onClose}
+                  aria-label="Close"
+                  className="flex items-center justify-center w-8 h-8 text-gray-400 transition-all rounded-lg shrink-0 hover:bg-gray-100 hover:text-gray-600 active:scale-90"
+                >
+                  <X size={20} />
+                </button>
               </div>
 
-              {/* Data Grid */}
-              <div className="grid grid-cols-2 py-6 gap-y-4 gap-x-8 border-y border-border">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-ink-light">
-                    <Calendar size={14} /> {t('book.year')}
-                  </div>
-                  <span className="font-mono text-ink">{book.year || '—'}</span>
-                </div>
+              {/* Author */}
+              <p className="mb-1 text-sm italic text-gray-400 shrink-0">
+                {book.author || t('book.unknown_author')}
+              </p>
 
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-ink-light">
-                    <Globe size={14} /> {t('book.language')}
-                  </div>
-                  <span className="font-mono uppercase text-ink">{book.languages || '—'}</span>
-                </div>
+              {/* Publisher */}
+              {book.publisher && (
+                <p className="mb-1 text-xs text-gray-300 shrink-0">
+                  {book.publisher}
+                </p>
+              )}
 
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-ink-light">
-                    <FileText size={14} /> {t('book.format')}
-                  </div>
-                  <span className="font-mono uppercase text-ink">{book.format || '—'}</span>
-                </div>
+              <div className="h-px my-4 bg-gray-100 shrink-0" />
 
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-ink-light">
-                    <HardDrive size={14} /> {t('book.size')}
-                  </div>
-                  <span className="font-mono uppercase text-ink">{book.size || '—'}</span>
+              {/* Metadata chips */}
+              {metaItems.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-5 shrink-0">
+                  {metaItems.map(({ icon, value }, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-1.5 rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-500"
+                    >
+                      <span className="text-gray-300">{icon}</span>
+                      {value}
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
 
               {/* Description */}
-              {book.description && (
-                <div className="space-y-2">
-                   {/* <span className="text-xs font-bold tracking-wider uppercase text-ink-light">{t('book.description')}</span> */}
-                  <div className="font-serif text-sm leading-relaxed text-ink/80 bg-[#f8f8f5] p-4 border border-border/50 rounded-sm">
-                    {book.description}
+              {description && (
+                <div className="flex flex-col flex-1 min-h-0 mb-5">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-300 shrink-0">
+                    {t('book.description')}
+                  </p>
+                  <div id="modal-scroll-area" className="flex-1 min-h-0 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                    <p className="text-sm leading-relaxed text-gray-500" dangerouslySetInnerHTML={{ __html: description }} />
                   </div>
                 </div>
               )}
 
               {/* Tags */}
               {book.tags && book.tags.length > 0 && (
-                <div className="space-y-2">
-                  <span className="text-xs font-bold tracking-wider uppercase text-ink-light">{t('book.subject_tags')}</span>
-                  <div className="flex flex-wrap gap-2">
+                <div className="mb-2 shrink-0">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-300">
+                    {t('book.subject_tags')}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
                     {book.tags.map((tag, i) => (
-                      <span key={i} className="px-2 py-1 text-xs font-medium bg-gray-100 border border-gray-200 rounded-sm text-ink-light">
+                      <span
+                        key={i}
+                        className="cursor-default rounded-full border border-gray-200 px-2.5 py-0.5 text-[11px] text-gray-400 transition-colors hover:border-gray-800 hover:text-gray-800"
+                      >
                         {tag}
                       </span>
                     ))}
@@ -200,28 +267,35 @@ export default function BookModal({ book, onClose }: BookModalProps) {
                 </div>
               )}
 
-              {/* Action */}
-              <div className="pt-2">
-                <a
-                  href={`/download/${book.md5}`}
-                  onClick={handleDownload}
-                  className={`flex items-center justify-center w-full gap-3 py-4 text-sm tracking-widest uppercase transition-all border shadow-none btn-primary hover:bg-accent hover:border-accent hover:text-white border-ink ${
-                    isDownloading ? 'opacity-80 cursor-wait' : ''
-                  }`}
-                >
-                  {isDownloading ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      {t('book.preparing_download') || 'Preparing...'}
-                    </>
-                  ) : (
-                    <>
-                      <Download size={18} />
-                      {t('book.download')}
-                    </>
-                  )}
-                </a>
-              </div>
+              {/* MD5 */}
+              <p className="mt-auto break-all font-mono text-[10px] text-gray-200 shrink-0">
+                {book.md5}
+              </p>
+            </div>
+
+            {/* Download — pinned */}
+            <div className="px-6 pt-3 shrink-0 bg-gradient-to-t from-white via-white to-transparent pb-7">
+              <button
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold tracking-wide text-white shadow-lg transition-all duration-200 ${
+                  isDownloading
+                    ? 'cursor-wait bg-gray-400'
+                    : 'bg-gray-900 hover:-translate-y-px hover:bg-gray-800 hover:shadow-xl active:scale-[0.98]'
+                }`}
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    {t('book.preparing_download') || 'Preparing…'}
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} />
+                    {t('book.download')}
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

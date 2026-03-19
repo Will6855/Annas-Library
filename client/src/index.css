@@ -33,6 +33,30 @@
   }
 }
 
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @layer base {
   body {
     @apply font-sans antialiased bg-paper text-ink selection:bg-accent-soft selection:text-ink;
@@ -46,26 +70,116 @@
   h6 {
     @apply font-serif font-semibold tracking-tight;
   }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  h4 {
+    @apply text-xl md:text-2xl;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Better input styling */
+  input[type="text"],
+  input[type="search"],
+  textarea {
+    @apply transition-all duration-200;
+  }
+
+  /* Remove default focus outline, we'll use our own */
+  input:focus,
+  textarea:focus,
+  button:focus {
+    @apply outline-none;
+  }
 }
 
 @layer components {
+  /* Buttons */
   .btn-minimal {
-    @apply px-4 py-2 text-sm font-medium transition-colors rounded-md;
-    @apply hover:bg-black/5 active:bg-black/10;
+    @apply px-3 md:px-4 py-2.5 md:py-3 text-sm font-medium transition-all rounded-lg;
+    @apply hover:bg-black/5 active:bg-black/10 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-primary {
-    @apply px-6 py-2.5 bg-ink text-white font-medium rounded-lg shadow-sm transition-all;
-    @apply hover:bg-black hover:shadow-md active:scale-95;
+    @apply px-5 md:px-6 py-2.5 md:py-3 bg-ink text-white font-medium rounded-lg shadow-md;
+    @apply transition-all duration-200 hover:bg-black hover:shadow-lg active:scale-95;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
+  .btn-secondary {
+    @apply px-5 md:px-6 py-2.5 md:py-3 bg-white border border-border text-ink font-medium rounded-lg;
+    @apply transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 active:scale-95;
+  }
+
+  /* Cards */
   .card-classic {
     @apply transition-all duration-300 bg-white border rounded-lg border-border;
     @apply hover:border-gray-400 hover:shadow-lg;
   }
 
+  .card-elevated {
+    @apply bg-white rounded-lg border border-border shadow-md;
+    @apply transition-all duration-200 hover:shadow-lg;
+  }
+
+  /* Inputs */
   .input-classic {
-    @apply w-full px-4 py-3 transition-all bg-white border rounded-lg outline-none border-border;
-    @apply focus:border-ink focus:ring-1 focus:ring-ink placeholder:text-gray-400;
+    @apply w-full px-4 py-3 md:py-3.5 transition-all bg-white border rounded-lg outline-none border-border;
+    @apply focus:border-ink focus:ring-2 focus:ring-accent/20 placeholder:text-gray-400;
+    @apply text-base md:text-base;
+  }
+
+  .input-mobile {
+    @apply px-4 py-3 text-base md:text-base; /* Prevent zoom on iOS */
+    @apply bg-white border border-border rounded-lg;
+    @apply focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent;
+  }
+
+  /* Text utilities */
+  .text-clamp-2 {
+    @apply line-clamp-2;
+  }
+
+  .text-clamp-3 {
+    @apply line-clamp-3;
+  }
+
+  /* Container utilities */
+  .container-safe {
+    @apply mx-auto px-4 md:px-6 lg:px-8 max-w-7xl;
+  }
+
+  /* Touch-friendly spacing */
+  .touch-target {
+    @apply min-h-10 min-w-10;
+  }
+
+  /* Responsive grid utilities */
+  .grid-responsive {
+    @apply grid gap-4 md:gap-6 lg:gap-8;
+  }
+
+  /* Backdrop blur overlay */
+  .overlay-blur {
+    @apply fixed inset-0 bg-black/30 backdrop-blur-sm;
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    @apply transition-all duration-200 ease-out;
   }
 }

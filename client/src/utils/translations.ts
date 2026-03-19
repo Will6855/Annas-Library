@@ -1,16 +1,31 @@
 // Utility to get translated category name
 export function getCategoryName(t: any, categoryId: string): string {
-    // Use bracket notation to access nested keys with colons
-    // Instead of 'categories.zlib_category_id:1', we need to access it properly
-    const translated = t(`categories.${categoryId}`, { keySeparator: false });
-
-    // If translation failed, fallback
-    if (!translated || translated === `categories.${categoryId}`) {
-        const cleanId = categoryId.replace('zlib_category_id:', '');
-        return `Category ${cleanId}`;
+    // Try direct key lookup with 'categories.' prefix
+    // This will work with the properly configured i18next
+    const directKey = `categories.${categoryId}`;
+    const translated = t(directKey);
+    
+    // If we got a real translation (not the key itself), return it
+    if (translated && translated !== directKey) {
+        return translated;
+    }
+    
+    // Fallback: try getting the categories object directly
+    try {
+        const categoriesObj = t('categories', { returnObjects: true });
+        if (categoriesObj && typeof categoriesObj === 'object' && categoryId in categoriesObj) {
+            const value = categoriesObj[categoryId];
+            if (value && typeof value === 'string') {
+                return value;
+            }
+        }
+    } catch (e) {
+        // Fallback if returnObjects doesn't work
     }
 
-    return translated;
+    // Final fallback to formatted version
+    const cleanId = categoryId.replace('zlib_category_id:', '');
+    return `Category ${cleanId}`;
 }
 
 // Utility to get translated content type name  

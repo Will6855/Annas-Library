@@ -6,7 +6,7 @@ import SearchBar from './components/SearchBar';
 import BookGrid from './components/BookGrid';
 import Pagination from './components/Pagination';
 import BookModal from './components/BookModal';
-import { Filter, Archive, Book as BookIcon } from 'lucide-react';
+import { Filter, Archive, Book as BookIcon, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getCategoryName, getContentTypeName } from './utils/translations';
 
@@ -78,6 +78,7 @@ function App() {
     page: 1, hasNext: false, hasPrev: false
   });
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [showSecondaryFilters, setShowSecondaryFilters] = useState(false);
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [contentTypes, setContentTypes] = useState<ContentType[]>([]);
@@ -170,23 +171,40 @@ function App() {
 
   useEffect(() => {
     if (window.location.pathname === '/') {
-      fetchBooks();
+      const keys = Array.from(searchParams.keys());
+      const isPopular = searchParams.get('popular') === 'true';
+      const currentLang = searchParams.get('lang');
+      const localeLang = i18n.language || 'en';
+      
+      if (keys.length === 0 || (isPopular && !currentLang)) {
+        const newParams = new URLSearchParams(searchParams);
+        if (keys.length === 0) newParams.set('popular', 'true');
+        if (newParams.get('popular') === 'true' && !newParams.get('lang')) {
+          newParams.set('lang', localeLang);
+        }
+        setSearchParams(newParams, { replace: true });
+      } else {
+        fetchBooks();
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, i18n.language]);
 
   // Reset search params when navigating to / from other pages
   useEffect(() => {
     if (location.pathname === '/' && previousPathname.current !== '/') {
-      setSearchParams(new URLSearchParams());
-      fetchBooks();
+      setSearchParams({ popular: 'true', lang: i18n.language || 'en' }, { replace: true });
     }
     previousPathname.current = location.pathname;
     sessionStorage.setItem('previousPathname', location.pathname);
-  }, [location, setSearchParams]);
+  }, [location, setSearchParams, i18n.language]);
 
   const handleSearch = (query: string) => {
     const newParams = new URLSearchParams(searchParams);
-    newParams.set('q', query);
+    if (query) {
+      newParams.set('q', query);
+    } else {
+      newParams.delete('q');
+    }
     setSearchParams(newParams);
   };
 
@@ -215,7 +233,7 @@ function App() {
   };
 
   const handleResetSearch = () => {
-    setSearchParams(new URLSearchParams());
+    setSearchParams({ popular: 'true', lang: i18n.language || 'en' });
   };
 
   const handleCategoryClick = (catId: string) => {
@@ -238,16 +256,16 @@ function App() {
     <div className="flex flex-col min-h-screen bg-paper">
       <Header />
 
-      <main className="flex-1 w-full px-6 py-12 mx-auto max-w-7xl">
+      <main className="flex-1 w-full px-4 py-8 mx-auto md:px-6 md:py-12 max-w-7xl">
         <Routes>
           <Route path="/" element={
             <>
               {/* Search Section */}
-              <div className="max-w-2xl mx-auto mb-16 text-center animate-fade-in">
-                 <h1 className="mb-6 font-serif text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl text-ink">
+              <div className="max-w-3xl mx-auto mb-12 text-center md:mb-16 animate-fade-in">
+                 <h1 className="mb-4 font-serif text-3xl font-bold tracking-tight md:mb-6 md:text-5xl lg:text-6xl text-ink">
                    {t('hero.title')}
                  </h1>
-                 <p className="mb-8 font-serif text-lg italic text-ink-light">
+                 <p className="mb-6 font-serif text-base italic md:mb-8 md:text-lg text-ink-light">
                    {t('hero.subtitle')}
                  </p>
                  
@@ -257,45 +275,53 @@ function App() {
               </div>
 
               {/* Filter Toolbar */}
-              <div className="sticky z-40 flex flex-wrap items-center justify-between gap-4 py-4 mb-8 border-y border-border bg-white/50 backdrop-blur-sm top-16 max-lg:static">
+              {/* Desktop Layout */}
+              <div
+                className="sticky z-40 flex-wrap items-center justify-between hidden gap-4 py-4 mb-8 border-y border-border bg-white/75 backdrop-blur-sm top-16 md:top-20 lg:flex lg:mb-12"
+                style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', paddingLeft: 'calc(50vw - 50% + 1.5rem)', paddingRight: 'calc(50vw - 50% + 1.5rem)' }}
+              >
                  <div className="flex flex-wrap items-center gap-4">
                    <div className="flex items-center gap-2 text-sm font-medium text-ink-light">
-                     <Filter size={16} />
+                     <Filter size={18} />
                      <span>{t('filter.by')}</span>
                    </div>
 
+                   {/* Popular Button */}
                    <button
                      onClick={handlePopular}
-                     className={`px-3 py-1 text-sm font-medium rounded transition-colors ${searchParams.get('popular') ? 'bg-accent text-white' : 'bg-gray-100 text-ink hover:bg-gray-200'}`}
+                     className={`px-3 py-1 text-sm font-medium rounded transition-colors ${searchParams.get('popular') ? 'bg-accent text-white shadow-md' : 'bg-gray-100 text-ink hover:bg-gray-200'}`}
                    >
-                     ⭐ {t('filter.popular')}
+                     ⭐ <span>{t('filter.popular')}</span>
                    </button>
                    
+                   {/* Language Select */}
                    <select 
                      className="text-sm font-medium transition-colors bg-transparent border-none cursor-pointer text-ink focus:ring-0 hover:text-accent"
                      value={langParam}
                      onChange={(e) => handleFilterChange('lang', e.target.value)}
                    >
-                     <option value="">{t('filter.all_languages')}</option>
+                     {searchParams.get('popular') !== 'true' && <option value="">{t('filter.all_languages')}</option>}
                      {languages.map(l => (
                        <option key={l.code} value={l.code}>{l.name}</option>
                      ))}
                    </select>
 
+                   {/* Format Select */}
                    <select 
-                     className={`text-sm font-medium transition-colors bg-transparent border-none cursor-pointer focus:ring-0 hover:text-accent ${searchParams.get('popular') ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-ink'}`}
+                     className={`text-sm font-medium transition-colors bg-transparent border-none cursor-pointer focus:ring-0 ${searchParams.get('popular') ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-ink hover:text-accent'}`}
                      value={contentParam}
                      onChange={(e) => handleFilterChange('content', e.target.value)}
                      disabled={searchParams.get('popular') === 'true'}
                    >
-                      <option value="">{t('filter.all_formats')}</option>
+                     <option value="">{t('filter.all_formats')}</option>
                      {contentTypes.map(type => (
                        <option key={type.id} value={type.id}>{getContentTypeName(t, type.id)}</option>
                      ))}
                    </select>
-                   
+
+                   {/* Category Select */}
                    <select 
-                     className={`border-none text-sm font-medium focus:ring-0 cursor-pointer transition-colors max-w-37.5 truncate bg-transparent ${searchParams.get('popular') ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-ink hover:text-accent'}`}
+                     className={`text-sm font-medium transition-colors bg-transparent border-none cursor-pointer focus:ring-0 max-w-37.5 truncate ${searchParams.get('popular') ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-ink hover:text-accent'}`}
                      value={activeParent?.id || ""}
                      onChange={(e) => handleFilterChange('category', e.target.value)}
                      disabled={searchParams.get('popular') === 'true'}
@@ -306,6 +332,7 @@ function App() {
                      ))}
                    </select>
 
+                   {/* Divider & Subcategory */}
                    {activeParent && activeParent.subcategories.length > 0 && !searchParams.get('popular') && (
                      <div className="flex items-center gap-2 animate-fade-in">
                        <span className="text-gray-300">/</span>
@@ -325,7 +352,8 @@ function App() {
                      </div>
                    )}
 
-                   {(searchParams.get('q') || langParam || contentParam || categoryParam || searchParams.get('popular')) && (
+                   {/* Reset Button */}
+                   {searchParams.get('popular') !== 'true' && (searchParams.get('q') || langParam || contentParam || categoryParam) && (
                      <button 
                        onClick={handleResetSearch}
                        className="px-3 py-1 ml-2 text-sm font-medium text-white transition-colors bg-gray-400 rounded hover:bg-gray-500"
@@ -335,15 +363,131 @@ function App() {
                    )}
                  </div>
 
+                 {/* Results Count */}
                  <div className="flex items-center gap-2 font-mono text-xs text-ink-light">
-                   <span>{t('results.count', { count: books.length })}</span>
+                   <span className="font-semibold uppercase">{books.length} {t('results.count_suffix', 'results')}</span>
                  </div>
+              </div>
+
+              {/* Mobile Layout */}
+              <div className="sticky left-0 right-0 z-40 flex flex-col gap-2 px-4 py-3 mb-4 -mx-4 lg:hidden top-16 md:top-20 md:gap-3 md:py-6 md:mb-12 border-y border-border bg-white/75 backdrop-blur-sm md:-mx-6 md:px-6">
+                 <div className="px-3 md:px-0">
+                   <div className="items-center hidden gap-3 mb-4 text-sm font-medium md:flex text-ink-light">
+                     <Filter size={18} />
+                     <span>{t('filter.by')}</span>
+                   </div>
+
+                   {/* Row 1: Popular, Language, Reset */}
+                   <div className="flex items-center gap-1.5 md:gap-3 mb-2 md:mb-3">
+                     <button
+                       onClick={handlePopular}
+                       className={`px-2 md:px-4 py-2 text-sm md:text-base font-medium rounded-lg transition-all flex-shrink-0 ${searchParams.get('popular') ? 'bg-accent text-white shadow-md' : 'bg-gray-100 text-ink hover:bg-gray-200'}`}
+                     >
+                       ⭐ <span className="hidden sm:inline">{t('filter.popular')}</span>
+                     </button>
+                     
+                     <select 
+                       className="flex-1 min-w-0 px-2 py-2 text-sm font-medium truncate transition-all bg-white border rounded-lg cursor-pointer md:px-4 md:text-base border-border text-ink focus:ring-2 focus:ring-accent/20 focus:border-accent hover:border-gray-400"
+                       value={langParam}
+                       onChange={(e) => handleFilterChange('lang', e.target.value)}
+                     >
+                       {searchParams.get('popular') !== 'true' && <option value="">{t('filter.all_languages')}</option>}
+                       {languages.map(l => (
+                         <option key={l.code} value={l.code}>{l.name}</option>
+                       ))}
+                     </select>
+
+                     {/* Reset Button */}
+                     {searchParams.get('popular') !== 'true' && (searchParams.get('q') || langParam || contentParam || categoryParam) && (
+                       <button 
+                         onClick={handleResetSearch}
+                         className="flex-shrink-0 px-2 py-2 text-sm font-medium text-white transition-all bg-gray-400 border-0 rounded-lg md:px-4 md:text-base hover:bg-gray-500 active:scale-95"
+                       >
+                         {t('filter.reset', 'Reset')}
+                       </button>
+                     )}
+                   </div>
+
+                   {/* Row 2: Format, More Button */}
+                   <div className="flex items-center gap-1.5 md:gap-3">
+                     <select 
+                       className={`px-2 md:px-4 py-2 text-sm md:text-base font-medium rounded-lg border border-border bg-white transition-all focus:ring-2 focus:ring-accent/20 focus:border-accent hover:border-gray-400 cursor-pointer truncate flex-1 min-w-0 ${searchParams.get('popular') ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-ink'}`}
+                       value={contentParam}
+                       onChange={(e) => handleFilterChange('content', e.target.value)}
+                       disabled={searchParams.get('popular') === 'true'}
+                     >
+                        <option value="">{t('filter.all_formats')}</option>
+                       {contentTypes.map(type => (
+                         <option key={type.id} value={type.id}>{getContentTypeName(t, type.id)}</option>
+                       ))}
+                     </select>
+
+                     {/* Toggle More Filters Button */}
+                    <button
+                      onClick={() => setShowSecondaryFilters(!showSecondaryFilters)}
+                      className={`px-2 md:px-4 py-2 text-sm md:text-base font-medium rounded-lg transition-all flex items-center gap-1 flex-shrink-0 relative ${showSecondaryFilters ? 'bg-accent text-white shadow-md' : 'bg-gray-100 text-ink hover:bg-gray-200'}`}
+                    >
+                      <span className="hidden sm:inline">More</span>
+                      <span className="sm:hidden">+</span>
+                      <ChevronDown size={16} className={`transition-transform ${showSecondaryFilters ? 'rotate-180' : ''}`} />
+                      
+                      {/* Badge notification on the button */}
+                      {!showSecondaryFilters && searchParams.get('category') && (
+                        <span className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white shadow-md">
+                          !
+                        </span>
+                      )}
+                    </button>
+                   </div>
+
+                   {/* Row 3 & 4: Categories and Subcategories (stacked full width) */}
+                   {showSecondaryFilters && (
+                     <div className="flex flex-col gap-2 mt-4 md:gap-3 animate-slide-in">
+                       <select 
+                         className={`px-3 md:px-4 py-2 text-sm md:text-base font-medium rounded-lg border border-border bg-white transition-all focus:ring-2 focus:ring-accent/20 focus:border-accent hover:border-gray-400 cursor-pointer truncate w-full ${searchParams.get('popular') ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-ink'}`}
+                         value={activeParent?.id || ""}
+                         onChange={(e) => handleFilterChange('category', e.target.value)}
+                         disabled={searchParams.get('popular') === 'true'}
+                       >
+                         <option value="">{t('filter.all_categories')}</option>
+                         {categories.map(c => (
+                           <option key={c.id} value={c.id}>{getCategoryName(t, c.id)}</option>
+                         ))}
+                       </select>
+
+                       {activeParent && activeParent.subcategories.length > 0 && !searchParams.get('popular') && (
+                         <select 
+                           className="w-full px-3 py-2 text-sm font-medium truncate transition-all bg-white border rounded-lg cursor-pointer md:px-4 md:text-base border-border text-ink focus:ring-2 focus:ring-accent/20 focus:border-accent hover:border-gray-400"
+                           value={categoryParam === activeParent.id ? "" : categoryParam}
+                           onChange={(e) => {
+                             const val = e.target.value;
+                             handleFilterChange('category', val === "" ? activeParent.id : val);
+                           }}
+                         >
+                           <option value="">{t('filter.all_subcategories')}</option>
+                           {activeParent.subcategories.map(subId => (
+                             <option key={subId} value={subId}>{getCategoryName(t, subId)}</option>
+                           ))}
+                         </select>
+                       )}
+                     </div>
+                   )}
+                 </div>
+
+                 {/* Results count */}
+                 {/* <div className="flex items-center justify-between px-3 pt-2 font-mono text-xs md:px-0 md:pt-0 md:text-sm text-ink-light">
+                   <div className="flex items-center gap-2">
+                     <span className="font-semibold">{books.length}</span>
+                     <span>{t('results.count_suffix', 'results')}</span>
+                   </div>
+                   <span className="hidden md:inline">{t('pagination.page', { page: pagination.page })}</span>
+                 </div> */}
               </div>
 
               {/* Book Grid Content */}
               {loading ? (
                 <div className="flex flex-col items-center justify-center gap-4 py-24 opacity-50">
-                  <div className="w-8 h-8 border-2 rounded-full border-ink border-t-transparent animate-spin"></div>
+                  <div className="w-8 h-8 border-4 rounded-full border-ink border-t-transparent animate-spin"></div>
                   <span className="font-serif italic text-ink-light">{t('loading.retrieving')}</span>
                 </div>
               ) : (
@@ -351,23 +495,26 @@ function App() {
                    {books.length > 0 ? (
                      <>
                        <BookGrid books={books} onBookClick={setSelectedBook} />
-                       <div className="flex justify-center mt-16">
-                          <Pagination 
-                            currentPage={pagination.page}
-                            hasNext={pagination.hasNext}
-                            hasPrev={pagination.hasPrev}
-                            onPageChange={(p) => {
-                              const newParams = new URLSearchParams(searchParams);
-                              newParams.set('page', p.toString());
-                              setSearchParams(newParams);
-                            }}
-                          />
-                       </div>
+                       <Pagination 
+                         currentPage={pagination.page}
+                         hasNext={pagination.hasNext}
+                         hasPrev={pagination.hasPrev}
+                         onPageChange={(p) => {
+                           const newParams = new URLSearchParams(searchParams);
+                           newParams.set('page', p.toString());
+                           setSearchParams(newParams);
+                           // Scroll to top
+                           window.scrollTo({ top: 0, behavior: 'smooth' });
+                         }}
+                       />
                      </>
                    ) : (
-                      <div className="py-24 text-center border border-dashed rounded-lg border-border bg-gray-50/50">
-                         <p className="mb-2 font-serif text-xl text-ink-light">{t('results.empty')}</p>
-                         <p className="text-sm text-gray-400">{t('results.empty_desc')}</p>
+                      <div className="py-20 text-center border border-dashed rounded-lg md:py-32 border-border bg-gray-50/50 animate-fade-in">
+                         <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-gray-100 rounded-full">
+                           <Archive size={24} className="text-gray-400" />
+                         </div>
+                         <p className="mb-2 font-serif text-lg md:text-xl text-ink-light">{t('results.empty')}</p>
+                         <p className="text-sm text-gray-400 md:text-base">{t('results.empty_desc')}</p>
                       </div>
                    )}
                 </div>
@@ -376,23 +523,23 @@ function App() {
           } />
 
           <Route path="/collections" element={
-            <div className="max-w-4xl mx-auto animate-fade-in">
-              <div className="mb-16 text-center">
-                <h1 className="mb-4 font-serif text-4xl font-bold md:text-5xl text-ink">{t('categories.title')}</h1>
-                <p className="font-serif text-lg italic text-ink-light">{t('categories.subtitle')}</p>
+            <div className="max-w-5xl mx-auto animate-fade-in">
+              <div className="mb-12 text-center md:mb-16">
+                <h1 className="mb-3 font-serif text-3xl font-bold md:mb-4 md:text-5xl text-ink">{t('categories.title')}</h1>
+                <p className="font-serif text-base italic md:text-lg text-ink-light">{t('categories.subtitle')}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
                 {categories.map(cat => (
                   <button 
                    key={cat.id}
                    onClick={() => handleCategoryClick(cat.id)}
-                   className="flex flex-col items-center justify-center p-8 text-center transition-all bg-white border rounded-lg group border-border hover:border-accent hover:shadow-lg min-h-64"
+                   className="flex flex-col items-center justify-center p-4 text-center transition-all duration-200 transform bg-white border rounded-lg md:p-8 group border-border hover:border-accent hover:shadow-lg hover:scale-105 active:scale-95 min-h-48 md:min-h-64 touch-target"
                   >
-                    <div className="flex items-center justify-center w-12 h-12 mb-4 transition-colors rounded-full text-ink-light group-hover:text-accent bg-gray-50 group-hover:bg-accent/10">
+                    <div className="flex items-center justify-center w-10 h-10 mb-3 transition-all rounded-full md:w-12 md:h-12 md:mb-4 text-ink-light group-hover:text-accent bg-gray-50 group-hover:bg-accent/10">
                       <BookIcon size={24} />
                     </div>
-                    <h3 className="font-serif text-lg font-bold transition-colors text-ink group-hover:text-accent">{getCategoryName(t, cat.id)}</h3>
+                    <h3 className="font-serif text-sm font-bold transition-colors md:text-lg text-ink group-hover:text-accent">{getCategoryName(t, cat.id)}</h3>
                     <span className="mt-2 font-mono text-xs tracking-wide text-gray-400 uppercase">{t('categories.collection')}</span>
                   </button>
                 ))}
@@ -401,38 +548,41 @@ function App() {
           } />
 
           <Route path="/about" element={
-            <div className="max-w-3xl mx-auto animate-fade-in">
-              <div className="mb-16 text-center">
-                <h1 className="mb-4 font-serif text-4xl font-bold md:text-5xl text-ink">{t('about.title')}</h1>
-                <div className="w-16 h-1 mx-auto bg-accent"></div>
+            <div className="max-w-4xl mx-auto animate-fade-in">
+              <div className="mb-12 text-center md:mb-16">
+                <h1 className="mb-4 font-serif text-3xl font-bold md:mb-6 md:text-5xl text-ink">{t('about.title')}</h1>
+                <div className="w-12 h-1 mx-auto rounded-full md:w-16 bg-accent"></div>
               </div>
 
-              <div className="mx-auto font-serif prose prose-slate lg:prose-lg">
-                <p className="mb-12 text-xl leading-relaxed text-center text-ink-light">
+              <div className="space-y-8 md:space-y-12">
+                {/* Description */}
+                <p className="max-w-2xl mx-auto mb-8 font-serif text-base leading-relaxed text-center md:mb-12 md:text-lg text-ink-light">
                   {t('about.description')}
                 </p>
 
-                <div className="p-8 mb-12 bg-white border rounded-lg shadow-sm border-border">
-                  <h2 className="flex items-center gap-3 mb-4 text-2xl font-bold text-ink">
-                    <Archive className="text-accent" /> {t('about.mission_title')}
+                {/* Mission Card */}
+                <div className="p-6 transition-shadow bg-white border rounded-lg shadow-sm md:p-8 border-border hover:shadow-md">
+                  <h2 className="flex items-center gap-3 mb-4 font-serif text-2xl font-bold md:mb-6 md:text-3xl text-ink">
+                    <Archive size={28} className="text-accent shrink-0" /> {t('about.mission_title')}
                   </h2>
-                  <p className="text-slate-700">
+                  <p className="font-serif text-base leading-relaxed md:text-lg text-ink-light">
                     {t('about.mission_text')}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 text-center md:grid-cols-3">
-                   <div className="p-6 rounded-lg bg-gray-50">
-                     <div className="mb-2 text-3xl font-bold text-ink">60M+</div>
-                     <div className="font-mono text-xs tracking-widest text-gray-500 uppercase">{t('about.stats_books')}</div>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-3">
+                   <div className="p-6 text-center transition-all border rounded-lg md:p-8 bg-gradient-to-br from-white to-gray-50 border-border hover:shadow-md">
+                     <div className="mb-3 font-serif text-3xl font-bold md:text-4xl text-accent">60M+</div>
+                     <div className="font-mono text-xs font-semibold tracking-widest uppercase md:text-sm text-ink-light">{t('about.stats_books')}</div>
                    </div>
-                   <div className="p-6 rounded-lg bg-gray-50">
-                     <div className="mb-2 text-3xl font-bold text-ink">1PB</div>
-                     <div className="font-mono text-xs tracking-widest text-gray-500 uppercase">{t('about.stats_data')}</div>
+                   <div className="p-6 text-center transition-all border rounded-lg md:p-8 bg-gradient-to-br from-white to-gray-50 border-border hover:shadow-md">
+                     <div className="mb-3 font-serif text-3xl font-bold md:text-4xl text-accent">1PB</div>
+                     <div className="font-mono text-xs font-semibold tracking-widest uppercase md:text-sm text-ink-light">{t('about.stats_data')}</div>
                    </div>
-                   <div className="p-6 rounded-lg bg-gray-50">
-                     <div className="mb-2 text-3xl font-bold text-ink">100%</div>
-                     <div className="font-mono text-xs tracking-widest text-gray-500 uppercase">{t('about.stats_free')}</div>
+                   <div className="p-6 text-center transition-all border rounded-lg md:p-8 bg-gradient-to-br from-white to-gray-50 border-border hover:shadow-md">
+                     <div className="mb-3 font-serif text-3xl font-bold md:text-4xl text-accent">100%</div>
+                     <div className="font-mono text-xs font-semibold tracking-widest uppercase md:text-sm text-ink-light">{t('about.stats_free')}</div>
                    </div>
                 </div>
               </div>

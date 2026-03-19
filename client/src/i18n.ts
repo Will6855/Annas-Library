@@ -2,40 +2,19 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import enClient from './locales/en.json';
 import frClient from './locales/fr.json';
-// Import server-side translations (they include categories)
-import enServer from '../../lib/locales/en.json';
-import frServer from '../../lib/locales/fr.json';
 
-const enServerAny = enServer as any;
-const frServerAny = frServer as any;
+const enCategoriesAny = (globalThis as any).__ENV_EN_CATEGORIES || {};
+const frCategoriesAny = (globalThis as any).__ENV_FR_CATEGORIES || {};
 
-// Initialize with client translations
+// Initialize with client translations and categories
 const en: any = { ...enClient };
 const fr: any = { ...frClient };
 
-// Merge ALL server keys into the root
-Object.keys(enServerAny).forEach(k => {
-    if (k === 'categories') {
-        // Flatten categories: "categories.zlib_category_id:1"
-        Object.entries(enServerAny.categories).forEach(([catId, catName]) => {
-            en[`categories.${catId}`] = catName;
-        });
-    } else {
-        en[k] = enServerAny[k];
-    }
-});
+// Add categories - will be populated from server
+en.categories = { ...en.categories, ...enCategoriesAny };
+fr.categories = { ...fr.categories, ...frCategoriesAny };
 
-Object.keys(frServerAny).forEach(k => {
-    if (k === 'categories') {
-        // Flatten categories
-        Object.entries(frServerAny.categories).forEach(([catId, catName]) => {
-            fr[`categories.${catId}`] = catName;
-        });
-    } else {
-        fr[k] = frServerAny[k];
-    }
-});
-
+// Initialize i18n first
 i18n
     .use(initReactI18next)
     .init({
@@ -45,12 +24,32 @@ i18n
         },
         lng: "en",
         fallbackLng: "en",
-        // Disable selectors to handle colons and dots in keys
-        nsSeparator: false,
-        keySeparator: false,
+        nsSeparator: false,  // Disable namespace separator to allow colons in keys
+        keySeparator: '.',   // Use dot for nested key separation
         interpolation: {
             escapeValue: false
         }
     });
+
+// Fetch categories from server after initialization
+if (typeof window !== 'undefined') {
+    Promise.all([
+        fetch('/api/translations/categories/en').then(r => r.json()).catch(() => ({})),
+        fetch('/api/translations/categories/fr').then(r => r.json()).catch(() => ({}))
+    ]).then(([enCats, frCats]) => {
+        if (enCats.data) {
+            i18n.getResourceBundle('en', 'translation').categories = {
+                ...i18n.getResourceBundle('en', 'translation').categories,
+                ...enCats.data
+            };
+        }
+        if (frCats.data) {
+            i18n.getResourceBundle('fr', 'translation').categories = {
+                ...i18n.getResourceBundle('fr', 'translation').categories,
+                ...frCats.data
+            };
+        }
+    });
+}
 
 export default i18n;

@@ -4,7 +4,7 @@ const os = require('os');
 const path = require('path');
 const express = require('express');
 const { generateRootCatalog, generateBooksFeed, generateOpenSearch, generateLanguageCatalog, generateContentTypeCatalog, generateCategoryCatalog } = require('./lib/catalog');
-const { searchBooks, getBookDetails, getActualDownloadLink, getPopularBooks, resolveZlibIdToMd5 } = require('./lib/scraper');
+const { searchBooks, getBookDetails, getActualDownloadLink, getPopularBooks } = require('./lib/scraper');
 const api = require('./lib/api');
 
 const app = express();
@@ -84,14 +84,7 @@ const handleDownload = async (req, res) => {
   const { resolve } = req.query;
 
   try {
-    if (md5.startsWith('zlib:')) {
-      const resolved = await resolveZlibIdToMd5(md5.replace('zlib:', ''));
-      if (!resolved) {
-        return res.status(404).send('Could not resolve Zlib ID to Anna\'s Archive MD5');
-      }
-      md5 = resolved;
-    }
-    
+
     const book = await getBookDetails(md5);
     if (book?.downloadLinks?.length) {
       const actualLink = await getActualDownloadLink(book.downloadLinks[0]);
@@ -136,6 +129,20 @@ async function startServer() {
   app.get('/api/categories', api.getCategories);
   app.get('/api/content-types', api.getContentTypes);
   app.get('/api/languages', api.getLanguages);
+  app.get('/api/zlib-detail/:lang/:id/:hash', api.getZlibDetail);
+  
+  // Translation endpoints - serve category translations with proper encoding
+  app.get('/api/translations/categories/:lang', (req, res) => {
+    try {
+      const { getTranslation } = require('./lib/translations');
+      const lang = req.params.lang === 'fr' ? 'fr' : 'en';
+      const translations = getTranslation(lang, 'categories');
+      res.json({ success: true, data: translations });
+    } catch (error) {
+      console.error('[API] Translations error:', error.message);
+      res.status(500).json({ success: false, error: 'Failed to fetch translations' });
+    }
+  });
 
   app.get('/opds', route(OPDS_CONTENT_TYPE, generateRootCatalog));
   app.get('/opds/search', handleSearch);
