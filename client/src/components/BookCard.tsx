@@ -51,14 +51,10 @@ export default function BookCard({ book, onClick }: BookCardProps) {
       {/* Cover */}
       <div className="relative flex justify-center w-full mb-3">
         <div
-          className={`relative overflow-hidden bg-stone-300 rounded-l-sm rounded-r-xl transition-all duration-300 aspect-[2/3] w-full max-w-[140px] ${
-            hasCover
-              ? 'shadow-[6px_6px_24px_rgba(0,0,0,0.28),-2px_0_2px_rgba(0,0,0,0.12),inset_-3px_0_6px_rgba(0,0,0,0.08)] group-hover:shadow-[8px_10px_28px_rgba(0,0,0,0.32),-2px_0_2px_rgba(0,0,0,0.14),inset_-3px_0_6px_rgba(0,0,0,0.08)] group-hover:-translate-y-1'
-              : 'shadow-[4px_4px_16px_rgba(0,0,0,0.15)] group-hover:shadow-[6px_8px_20px_rgba(0,0,0,0.2)] group-hover:-translate-y-1'
-          }`}
+          className="relative bg-stone-300 transition-all duration-300 aspect-[2/3] w-full max-w-[140px] landscape:max-w-[100px] lg:landscape:max-w-[140px] group-hover:-translate-y-1 shadow-md group-hover:shadow-xl"
+          style={{ borderRadius: '0 4px 4px 0' }}
         >
-          {/* Spine */}
-          <div className="absolute bottom-0 left-0 top-0 z-10 w-1.5 bg-gradient-to-r from-black/20 to-black/[0.03]" />
+          <div className="absolute inset-0 overflow-hidden" style={{ borderRadius: '0 4px 4px 0' }}>
 
           {/* Format badge */}
           {book.format && (
@@ -103,11 +99,23 @@ export default function BookCard({ book, onClick }: BookCardProps) {
               {/* <ChevronRight size={16} /> */}
             </button>
           </div>
+          </div>
+
+          {/* Book Cover Overlay Style */}
+          <div
+            className="absolute inset-0 z-30 pointer-events-none"
+            style={{
+              borderRadius: '0 4px 4px 0',
+              boxShadow: '2px 2px 4px rgba(0,0,0,0.4)',
+              backgroundImage: `url("data:image/svg+xml,%0A%3Csvg width='6' height='150' viewBox='0 0 6 150' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='6' height='150' fill='url(%23paint0_linear)'/%3E%3Cdefs%3E%3ClinearGradient id='paint0_linear' x1='6' y1='61.5234' x2='-9.54301e-06' y2='61.5315' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='white' stop-opacity='0'/%3E%3Cstop offset='0.139111' stop-color='white' stop-opacity='0.2'/%3E%3Cstop offset='0.290477' stop-opacity='0.18'/%3E%3Cstop offset='0.726819' stop-color='%23D8D8D8' stop-opacity='0.273181'/%3E%3Cstop offset='0.839352' stop-opacity='0.15'/%3E%3Cstop offset='1' stop-opacity='0.19'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E%0A")`,
+              backgroundRepeat: 'repeat-y',
+            }}
+          />
         </div>
       </div>
 
       {/* Title and Author */}
-      <div className="flex flex-col w-full max-w-[140px] gap-1">
+      <div className="flex flex-col w-full max-w-[140px] landscape:max-w-[100px] lg:landscape:max-w-[140px] gap-1">
         <h3 className="font-serif text-sm font-bold leading-tight transition-colors md:text-base text-ink line-clamp-2 group-hover:text-accent">
           {book.title}
         </h3>

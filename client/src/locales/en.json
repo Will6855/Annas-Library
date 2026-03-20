@@ -22,7 +22,11 @@
     "all_languages": "All Languages",
     "reset": "Reset",
     "popular": "Popular",
-    "all": "All"
+    "all": "All",
+    "hide": "Hide",
+    "filters": "Filters",
+    "toggle_filters": "Toggle Filters",
+    "more": "More"
   },
   "hero": {
     "title": "Anna's Library",

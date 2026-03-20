@@ -1,6 +1,6 @@
 {
   "name": "Anna's Library",
-  "short_name": "Library",
+  "short_name": "Anna's Library",
   "description": "Discover a vast collection of e-books from Anna's Archive",
   "start_url": "/",
   "scope": "/",
@@ -8,7 +8,10 @@
   "orientation": "portrait-primary",
   "theme_color": "#1f2937",
   "background_color": "#ffffff",
-  "categories": ["books", "education"],
+  "categories": [
+    "books",
+    "education"
+  ],
   "screenshots": [
     {
       "src": "/logo.png",

@@ -22,7 +22,11 @@
     "all_languages": "Toutes les langues",
     "reset": "Réinitialiser",
     "popular": "Populaire",
-    "all": "Tous"
+    "all": "Tous",
+    "hide": "Masquer",
+    "filters": "Filtres",
+    "toggle_filters": "Basculer les filtres",
+    "more": "Plus"
   },
   "hero": {
     "title": "La Bibliothèque d'Anna",

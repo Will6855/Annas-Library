@@ -32,8 +32,22 @@ export default function BookModal({ book, onClose }: BookModalProps) {
 
   const [translateY, setTranslateY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const isClosingRef = useRef(false);
+
   const dragStartY = useRef(0);
   const currentY = useRef(0);
+
+  const handleClose = () => {
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
+    setIsClosing(true);
+    // Slide down fully off screen
+    setTranslateY(typeof window !== 'undefined' ? window.innerHeight : 1000);
+    setTimeout(() => {
+      onClose();
+    }, 300); // 300ms matches Tailwind duration-300
+  };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length !== 1) return;
@@ -50,20 +64,24 @@ export default function BookModal({ book, onClose }: BookModalProps) {
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
     const deltaY = e.touches[0].clientY - dragStartY.current;
-    if (deltaY > 0) {
-      setTranslateY(deltaY);
-      currentY.current = deltaY;
-    } else {
+    
+    // If scrolling up when at the top of the scroll area, let it do native scroll / bounce
+    if (deltaY < 0) {
       setTranslateY(0);
       currentY.current = 0;
+      return;
     }
+    
+    setTranslateY(deltaY);
+    currentY.current = deltaY;
   };
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
     setIsDragging(false);
-    if (currentY.current > 120) {
-      onClose();
+    // Lower threshold for easier closing
+    if (currentY.current > 80) {
+      handleClose();
     } else {
       setTranslateY(0);
       currentY.current = 0;
@@ -110,13 +128,22 @@ export default function BookModal({ book, onClose }: BookModalProps) {
   };
 
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handleEscape = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose(); };
     document.addEventListener('keydown', handleEscape);
+    
+    // Prevent scrolling on html and body for better mobile support
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onClose]);
 
   const hasCover = book.coverUrl && !imageError;
@@ -130,11 +157,11 @@ export default function BookModal({ book, onClose }: BookModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm animate-fade-in sm:items-center sm:p-5"
-      onClick={onClose}
+      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center sm:p-5 overscroll-none transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'animate-fade-in'}`}
+      onClick={handleClose}
     >
       <div
-        className={`flex flex-col w-full max-w-3xl overflow-hidden bg-white shadow-2xl rounded-t-3xl animate-slide-up sm:rounded-3xl ${isDragging ? '' : 'transition-transform duration-300'}`}
+        className={`flex flex-col w-full max-w-3xl overflow-hidden bg-white shadow-2xl rounded-t-3xl sm:rounded-3xl ${!isDragging ? 'transition-transform duration-300' : ''} ${isClosing ? '' : 'animate-slide-up'}`}
         style={{ maxHeight: '92vh', transform: `translateY(${translateY}px)` }}
         onClick={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
@@ -154,14 +181,10 @@ export default function BookModal({ book, onClose }: BookModalProps) {
 
             {/* Book cover */}
             <div
-              className={`relative h-44 w-[116px] shrink-0 overflow-hidden bg-stone-300 sm:h-56 sm:w-[148px] ${
-                hasCover
-                  ? 'rounded-l-sm rounded-r-xl shadow-[6px_6px_24px_rgba(0,0,0,0.28),-2px_0_2px_rgba(0,0,0,0.12),inset_-3px_0_6px_rgba(0,0,0,0.08)]'
-                  : 'rounded-l-sm rounded-r-xl shadow-[4px_4px_16px_rgba(0,0,0,0.15)]'
-              }`}
+              className="relative h-44 w-[116px] shrink-0 bg-stone-300 sm:h-56 sm:w-[148px]"
+              style={{ borderRadius: '0 4px 4px 0' }}
             >
-              {/* Spine */}
-              <div className="absolute bottom-0 left-0 top-0 z-10 w-1.5 bg-gradient-to-r from-black/20 to-black/[0.03]" />
+              <div className="absolute inset-0 overflow-hidden" style={{ borderRadius: '0 4px 4px 0' }}>
 
               {/* Fallback */}
               {(!hasCover || !imageLoaded) && (
@@ -184,37 +207,51 @@ export default function BookModal({ book, onClose }: BookModalProps) {
                   decoding="async"
                 />
               )}
+              </div>
+
+              {/* Book Cover Overlay Style */}
+              <div
+                className="absolute inset-0 z-30 pointer-events-none "
+                style={{
+                  borderRadius: '0 4px 4px 0',
+                  boxShadow: '2px 2px 4px rgba(0,0,0,0.4)',
+                  backgroundImage: `url("data:image/svg+xml,%0A%3Csvg width='6' height='150' viewBox='0 0 6 150' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='6' height='150' fill='url(%23paint0_linear)'/%3E%3Cdefs%3E%3ClinearGradient id='paint0_linear' x1='6' y1='61.5234' x2='-9.54301e-06' y2='61.5315' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='white' stop-opacity='0'/%3E%3Cstop offset='0.139111' stop-color='white' stop-opacity='0.2'/%3E%3Cstop offset='0.290477' stop-opacity='0.18'/%3E%3Cstop offset='0.726819' stop-color='%23D8D8D8' stop-opacity='0.273181'/%3E%3Cstop offset='0.839352' stop-opacity='0.15'/%3E%3Cstop offset='1' stop-opacity='0.19'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E%0A")`,
+                  backgroundRepeat: 'repeat-y',
+                }}
+              />
             </div>
           </div>
 
           {/* ── Detail column ── */}
-          <div className="flex flex-col flex-1 min-h-0">
+          <div className="flex flex-col flex-1 min-h-0 relative">
 
-            {/* Content */}
-            <div className="flex flex-col flex-1 min-h-0 px-6 pt-5 pb-6 sm:pt-6">
+            {/* PINNED CLOSE BUTTON */}
+            <button
+              onClick={handleClose}
+              aria-label="Close"
+              className="absolute top-4 right-4 z-10 flex items-center justify-center w-8 h-8 text-gray-400 transition-all rounded-lg bg-white/80 backdrop-blur-sm sm:bg-transparent hover:bg-gray-100 hover:text-gray-600 active:scale-90"
+            >
+              <X size={20} />
+            </button>
 
-              {/* Title & Close Row */}
-              <div className="flex items-start justify-between gap-4 mb-2 shrink-0">
+            {/* Content (Scrolls everything else) */}
+            <div id="modal-scroll-area" className="flex flex-col flex-1 min-h-0 overflow-y-auto px-6 pt-5 pb-6 sm:pt-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+
+              {/* Title */}
+              <div className="mb-2 shrink-0 pr-10">
                 <h2 className="text-xl font-semibold leading-snug tracking-tight pt-0.5 text-gray-900 sm:text-2xl">
                   {book.title}
                 </h2>
-                <button
-                  onClick={onClose}
-                  aria-label="Close"
-                  className="flex items-center justify-center w-8 h-8 text-gray-400 transition-all rounded-lg shrink-0 hover:bg-gray-100 hover:text-gray-600 active:scale-90"
-                >
-                  <X size={20} />
-                </button>
               </div>
 
               {/* Author */}
-              <p className="mb-1 text-sm italic text-gray-400 shrink-0">
+              <p className="mb-1 text-sm italic text-gray-400 shrink-0 pr-8">
                 {book.author || t('book.unknown_author')}
               </p>
 
               {/* Publisher */}
               {book.publisher && (
-                <p className="mb-1 text-xs text-gray-300 shrink-0">
+                <p className="mb-1 text-xs text-gray-300 shrink-0 pr-8">
                   {book.publisher}
                 </p>
               )}
@@ -238,11 +275,11 @@ export default function BookModal({ book, onClose }: BookModalProps) {
 
               {/* Description */}
               {description && (
-                <div className="flex flex-col flex-1 min-h-0 mb-5">
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-300 shrink-0">
+                <div className="mb-5 shrink-0">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-300">
                     {t('book.description')}
                   </p>
-                  <div id="modal-scroll-area" className="flex-1 min-h-0 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                  <div className="pr-2">
                     <p className="text-sm leading-relaxed text-gray-500" dangerouslySetInnerHTML={{ __html: description }} />
                   </div>
                 </div>
@@ -250,7 +287,7 @@ export default function BookModal({ book, onClose }: BookModalProps) {
 
               {/* Tags */}
               {book.tags && book.tags.length > 0 && (
-                <div className="mb-2 shrink-0">
+                <div className="mb-5 shrink-0">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-300">
                     {t('book.subject_tags')}
                   </p>

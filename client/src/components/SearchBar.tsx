@@ -3,11 +3,12 @@ import { Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface SearchBarProps {
-  onSearch: (query: string) => void;
+  onSearch: (query: string, clearPopular?: boolean) => void;
   initialQuery?: string;
+  isPopularActive?: boolean;
 }
 
-export default function SearchBar({ onSearch, initialQuery = '' }: SearchBarProps) {
+export default function SearchBar({ onSearch, initialQuery = '', isPopularActive = false }: SearchBarProps) {
   const { t } = useTranslation();
   const [query, setQuery] = useState(initialQuery);
 
@@ -18,7 +19,8 @@ export default function SearchBar({ onSearch, initialQuery = '' }: SearchBarProp
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(query);
+    // If popular filter is active and user is searching, clear it
+    onSearch(query, isPopularActive && !!query);
   };
 
   const clearQuery = () => {
@@ -38,7 +40,7 @@ export default function SearchBar({ onSearch, initialQuery = '' }: SearchBarProp
             className="input-mobile w-full h-12 md:h-[52px] text-base md:text-lg font-sans"
             aria-label="Search books"
           />
-          
+
           {/* Clear button - appears when there's text */}
           {query && (
             <button
@@ -53,8 +55,8 @@ export default function SearchBar({ onSearch, initialQuery = '' }: SearchBarProp
         </div>
 
         {/* Search button */}
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           className="btn-primary h-12 md:h-[52px] px-6 md:px-8 whitespace-nowrap text-sm md:text-base flex items-center justify-center"
           aria-label="Search"
         >

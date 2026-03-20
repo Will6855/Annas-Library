@@ -155,7 +155,8 @@ export default function Header() {
           <div className="border-t lg:hidden border-border bg-paper animate-slide-in">
             <nav className="py-4 space-y-1 container-safe">
               <NavLink
-                to={{ pathname: '/', search: location.search }}
+                // to={{ pathname: '/', search: location.search }}
+                to={`/?popular=true&lang=${i18n.language}`}
                 className={mobileNavLinkClass}
                 onClick={() => setIsMobileMenuOpen(false)}
               >

@@ -12,6 +12,14 @@ A modern OPDS (Open Publication Distribution System) server powered by Anna's Ar
 - 🔗 **Direct Downloads**: Resolves and redirects to actual download links
 - 📱 **E-reader Compatible**: Works with Readest, Moon+ Reader, FBReader, Aldiko, KOReader, ReadEra, and more
 
+## Todo
+
+- [ ] Add support for other languages
+- [ ] Add book thickness based on page count
+- [ ] Add user accounts
+- [ ] Add book recommendations
+- [ ] Add book rating
+
 ## Architecture
 
 This project consists of two main components:

@@ -19,7 +19,7 @@ interface BookGridProps {
 
 export default function BookGrid({ books, onBookClick }: BookGridProps) {
   return (
-    <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-2 gap-y-6 md:gap-x-4 md:gap-y-8 lg:gap-x-6 lg:gap-y-10 pb-12">
+    <div className="grid grid-cols-3 landscape:grid-cols-6 lg:landscape:grid-cols-6 xl:landscape:grid-cols-7 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-x-2 gap-y-6 md:gap-x-4 md:gap-y-8 lg:gap-x-6 lg:gap-y-10 pb-12">
       {books.map((book) => (
         <BookCard 
           key={book.id + book.md5}
