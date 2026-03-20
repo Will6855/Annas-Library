@@ -13,7 +13,7 @@ interface FilterBarProps {
   activeParent: Category | undefined;
   handlePopular: () => void;
   handleFilterChange: (key: string, value: string) => void;
-  handleResetSearch: () => void;
+  handleResetSearch: (q: string) => void;
   categoryParam: string;
   langParam: string;
   contentParam: string;
@@ -141,10 +141,9 @@ const FilterBar: React.FC<FilterBarProps> = ({
             </div>
           )}
 
-          {searchParams.get('popular') !== 'true' &&
-            (searchParams.get('q') || langParam || contentParam || categoryParam) && (
+          {(langParam || contentParam || categoryParam) && (
               <button
-                onClick={handleResetSearch}
+                onClick={() => handleResetSearch(searchParams.get('q') || '')}
                 className="ml-2 rounded bg-gray-400 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-gray-500"
               >
                 {t('filter.reset', 'Reset')}
@@ -220,10 +219,9 @@ const FilterBar: React.FC<FilterBarProps> = ({
                 ))}
               </select>
 
-              {searchParams.get('popular') !== 'true' &&
-                (searchParams.get('q') || langParam || contentParam || categoryParam) && (
+              {(langParam || contentParam || categoryParam) && (
                   <button
-                    onClick={handleResetSearch}
+                    onClick={() => handleResetSearch(searchParams.get('q') || '')}
                     className="flex-shrink-0 rounded-lg border-0 bg-gray-400 px-2 py-2 text-sm font-medium text-white transition-all hover:bg-gray-500 active:scale-95 md:px-4 md:text-base"
                   >
                     {t('filter.reset', 'Reset')}

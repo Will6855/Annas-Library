@@ -152,8 +152,8 @@ export function useBooks() {
     setSearchParams(newParams);
   };
 
-  const handleResetSearch = () => {
-    setSearchParams({ popular: 'true', lang: i18n.language || 'en' });
+  const handleResetSearch = (q: string) => {
+    setSearchParams({ q });
   };
 
   return {
