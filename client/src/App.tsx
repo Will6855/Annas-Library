@@ -71,7 +71,11 @@ function App() {
       </footer>
       
       {selectedBook && (
-        <BookModal book={selectedBook} onClose={() => setSelectedBook(null)} />
+        <BookModal 
+          book={selectedBook} 
+          onClose={() => setSelectedBook(null)} 
+          onBookSelect={setSelectedBook}
+        />
       )}
     </div>
   );

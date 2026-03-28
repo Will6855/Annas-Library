@@ -38,7 +38,9 @@ async function startServer() {
   app.get('/api/categories', api.getCategories);
   app.get('/api/content-types', api.getContentTypes);
   app.get('/api/languages', api.getLanguages);
-  app.get('/api/zlib-detail/:lang/:id/:hash', api.getZlibDetail);
+  app.get('/api/zlib-detail/:id/:hash', api.getZlibDetail);
+  app.get('/api/similar/:id/:hash', api.getSimilar);
+  app.get('/api/recommended/:id', api.getRecommended);
   
   // Translation endpoints - serve category translations with proper encoding
   app.get('/api/translations/categories/:lang', (req, res) => {

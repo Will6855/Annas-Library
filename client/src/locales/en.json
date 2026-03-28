@@ -43,6 +43,7 @@
     "language": "Language",
     "format": "Format",
     "size": "Size",
+    "pages": "pages",
     "download": "Download",
     "unknown_author": "Unknown Author",
     "unknown_title": "Unknown Title",
@@ -51,7 +52,10 @@
     "view_details": "View Details",
     "preparing_download": "Preparing...",
     "download_error": "Download Error",
-    "description": "Description"
+    "description": "Description",
+    "similar_books": "Similar Books",
+    "too_many_requests": "Too many requests",
+    "try_again_later": "Please try again later"
   },
   "common": {
     "previous": "Previous",

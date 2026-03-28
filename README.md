@@ -17,7 +17,7 @@ A modern OPDS (Open Publication Distribution System) server powered by Anna's Ar
 - [ ] Add support for other languages
 - [ ] Add book thickness based on page count
 - [ ] Add user accounts
-- [ ] Add book recommendations
+- [x] Add book recommendations
 - [ ] Add book rating
 
 ## Architecture

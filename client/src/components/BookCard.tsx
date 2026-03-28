@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight } from 'lucide-react';
+// import { ChevronRight } from 'lucide-react';
 
 interface Book {
   id: string;
@@ -12,6 +12,7 @@ interface Book {
   languages?: string;
   format?: string;
   size?: string;
+  pages?: number;
 }
 
 interface BookCardProps {

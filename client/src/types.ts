@@ -8,7 +8,12 @@ export interface Book {
   languages?: string;
   format?: string;
   size?: string;
+  pages?: number;
   tags?: string[];
+  publisher?: string;
+  description?: string;
+  zlibId?: number;
+  zlibHash?: string;
 }
 
 export interface Filters {

@@ -2,7 +2,7 @@
   "name": "Anna's Library",
   "short_name": "Anna's Library",
   "description": "Discover a vast collection of e-books from Anna's Archive",
-  "start_url": "/",
+  "start_url": "/?popular=true",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
